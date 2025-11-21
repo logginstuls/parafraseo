@@ -1,40 +1,98 @@
-// server.js
+// server.js (Lógica mejorada para alta variabilidad)
 const express = require('express');
 const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 3000;
 
 // Middleware
-// Permite peticiones CORS desde cualquier origen (necesario para Render/frontend)
 app.use(cors()); 
-// Permite que el servidor lea los datos JSON enviados en el cuerpo de la petición
 app.use(express.json());
 
-// --- LÓGICA DE PARAFRASEO ---
-//⚠️ NOTA CRÍTICA: Aquí es donde integrarías una API de PLN real.
-// Ejemplos: Usar 'axios' para llamar a la API de OpenAI, Cohere, o Hugging Face.
-function paraphraseText(originalText) {
-    // ESTA ES UNA IMPLEMENTACIÓN SIMPLIFICADA SÓLO PARA DEMOSTRACIÓN.
-    // Simula una pequeña reestructuración y añade una variación.
+// --- LÓGICA DE PARAFRASEO CON ALTA ENTROPÍA ---
+// ⚠️ NOTA CRÍTICA: Aquí es donde integrarías una API de PLN real.
+// Para simular 100,000 variaciones, usaremos Múltiples Tablas de Reemplazo.
 
+// 1. TABLAS DE SINÓNIMOS Y VARIACIONES (Para la parte central del cuerpo)
+const synonymMap = {
+    "te escribimos para informar": [
+        "deseamos comunicarte", 
+        "nos dirigimos a usted para notificar", 
+        "queremos ponerle al tanto de", 
+        "es nuestra obligación informarle"
+    ],
+    "compra exitosa": [
+        "adquisición completada",
+        "transacción finalizada",
+        "pedido procesado",
+        "orden de compra exitosa"
+    ],
+    "tu cuenta": [
+        "su perfil", 
+        "su registro", 
+        "la cuenta vinculada"
+    ],
+    "por favor, presta atención": [
+        "es crucial que revise", 
+        "le solicitamos encarecidamente revisar", 
+        "es vital que verifique"
+    ],
+    "podrás cancelar": [
+        "tendrá la opción de anular", 
+        "podrá rechazar",
+        "le permitimos invalidar"
+    ],
+    "en caso de no reconocerla": [
+        "si no identifica la acción", 
+        "en caso de desconocer esta operación",
+        "si le resulta extraña"
+    ]
+};
+
+// 2. VARIACIONES DE APERTURA (Prefijos)
+const openingVariations = [
+    "Estimado cliente, ",
+    "Queremos contarte algo importante: ",
+    "Presta atención, ",
+    "Saludos cordiales, ",
+    "Le enviamos este mensaje para informarle: "
+];
+
+// 3. VARIACIONES DE CIERRE (Sufijos)
+const closingVariations = [
+    "Gracias por su comprensión. ",
+    "Quedamos a la espera de su respuesta. ",
+    "Cualquier duda, estamos a su disposición. ",
+    "Agradecemos su preferencia y atención. "
+];
+
+
+function paraphraseText(originalText) {
     let paraphrased = originalText.trim();
     
-    // 1. Reemplazo simple para "Parafraseo"
-    paraphrased = paraphrased.replace(/te escribimos para informar/g, 'deseamos comunicarte');
+    // 1. Aplicar Reemplazos Múltiples
+    for (const key in synonymMap) {
+        if (paraphrased.includes(key)) {
+            // Seleccionar un reemplazo aleatorio del array de sinónimos
+            const variations = synonymMap[key];
+            const randomReplacement = variations[Math.floor(Math.random() * variations.length)];
+            
+            // Reemplazar todas las ocurrencias del patrón
+            paraphrased = paraphrased.split(key).join(randomReplacement);
+        }
+    }
     
-    // 2. Adición de una frase inicial aleatoria para variación (simulando "entropía" del texto)
-    const variations = [
-        "Estimado cliente, ",
-        "Queremos contarte algo importante: ",
-        "Presta atención, "
-    ];
-    const prefix = variations[Math.floor(Math.random() * variations.length)];
+    // 2. Añadir variación de apertura (prefix)
+    const prefix = openingVariations[Math.floor(Math.random() * openingVariations.length)];
+    
+    // 3. Añadir variación de cierre (suffix)
+    const suffix = closingVariations[Math.floor(Math.random() * closingVariations.length)];
 
-    return prefix + paraphrased;
+    return prefix + paraphrased + ". " + suffix;
 }
 
 // --- RUTA API PARA EL PARAFRASEO ---
 app.post('/paraphrase', (req, res) => {
+    // Código para manejar la solicitud
     const inputText = req.body.text;
 
     if (!inputText) {
